@@ -33,7 +33,9 @@
 #ifndef _WIN32
     #include <sys/mman.h>
 #endif
-
+#include <vector>
+#include <string>
+#include <iostream>
 
 #define APPNAME "zita-n2j"
 
@@ -55,7 +57,7 @@ static int           buff_arg  = 10;
 static int           sync_arg  = 0;
 static int           filt_arg  = 0;
 static bool          info_opt  = false;
-
+static std::vector<std::string> connections;
 
 static void help (void)
 {
@@ -73,11 +75,12 @@ static void help (void)
 //    fprintf (stderr, "  --sync  <time>      Sync delay (ms) [%d]\n", sync_arg);
     fprintf (stderr, "  --filt  <delay>     Resampler filter delay [16..96]\n");
     fprintf (stderr, "  --info              Print additional info\n");
+    fprintf (stderr, "  --conn <port>       Add a connection\n");
     exit (1);
 }
 
 
-enum { HELP, NAME, SERV, CHAN, BUFF, SYNC, FILT, INFO };
+enum { HELP, NAME, SERV, CHAN, BUFF, SYNC, FILT, INFO, CONN };
 
 
 static struct option options [] = 
@@ -90,6 +93,7 @@ static struct option options [] =
     { "sync",  1, 0, SYNC  },
     { "filt",  1, 0, FILT  },
     { "info",  0, 0, INFO  },
+    { "conn",  1, 0, CONN  },
     { 0, 0, 0, 0 }
 };
 
@@ -139,6 +143,9 @@ static void procoptions (int ac, char *av [])
 	    break;
 	case INFO:
 	    info_opt = true;
+	    break;
+	case CONN:
+            connections.push_back(optarg);
 	    break;
  	}
     }
@@ -326,6 +333,24 @@ int main (int ac, char *av [])
     timeq = new Lfq_timedata (256);
 //    syncq = new Lfq_timedata (256);
     infoq = new Lfq_infodata (256);
+
+    // create connections:
+    {
+      size_t i = 0;
+      for( auto c : connections )
+        {
+          if( i < nchan ){
+            char s[16];
+            sprintf (s, "out_%d", chlist [i] + 1);
+            std::string src = name_arg;
+            src += std::string(":") + std::string(s);
+            int err = jackrx->connect (src.c_str(), c.c_str() );
+            std::cerr << s << " " << err << " " << c << std::endl;
+            ++i;
+          }
+        }
+    }
+
     usleep (100000);
 
     while (! stop)

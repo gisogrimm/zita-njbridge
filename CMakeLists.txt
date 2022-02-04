@@ -35,24 +35,24 @@ set(N2J_SOURCES ${PROJECT_SOURCE_DIR}/source/zita-n2j.cc
         ${PROJECT_SOURCE_DIR}/source/zsockets.cc
         ${PROJECT_SOURCE_DIR}/source/syncrx.cc)
 
-add_executable(zita-j2n ${PROJECT_SOURCE_DIR}/source/zita-j2n.cc ${J2N_SOURCES})
-add_executable(zita-n2j ${PROJECT_SOURCE_DIR}/source/zita-n2j.cc ${N2J_SOURCES})
-target_include_directories(zita-j2n
+add_executable(ovzita-j2n ${PROJECT_SOURCE_DIR}/source/zita-j2n.cc ${J2N_SOURCES})
+add_executable(ovzita-n2j ${PROJECT_SOURCE_DIR}/source/zita-n2j.cc ${N2J_SOURCES})
+target_include_directories(ovzita-j2n
         PUBLIC
         ${JACK_INCLUDE_DIRS}
         )
-target_link_libraries(zita-j2n
+target_link_libraries(ovzita-j2n
         PRIVATE
         Threads::Threads
         PUBLIC
         ${JACK_LIBRARIES}
         )
-target_include_directories(zita-n2j
+target_include_directories(ovzita-n2j
         PRIVATE
         zita-resampler/source
         ${JACK_INCLUDE_DIRS}
         )
-target_link_libraries(zita-n2j
+target_link_libraries(ovzita-n2j
         PRIVATE
         Threads::Threads
         PUBLIC
@@ -60,4 +60,4 @@ target_link_libraries(zita-n2j
         ${JACK_LIBRARIES}
         )
 
-install(TARGETS zita-j2n zita-n2j DESTINATION bin)
+install(TARGETS ovzita-j2n ovzita-n2j DESTINATION bin)

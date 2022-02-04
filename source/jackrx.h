@@ -50,6 +50,7 @@ public:
     int fsamp (void) const { return _fsamp; }
     int bsize (void) const { return _bsize; }
     int rprio (void) const { return _rprio; }
+    int connect( const char* src, const char* dest) { return jack_connect(_client, src, dest ); }
 
 private:
 
