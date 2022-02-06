@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10.0)
-project(zita-njbridge VERSION 0.4.4)
+project(zita-njbridge VERSION 0.4.8)
 
 add_definitions(-DVERSION="${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
 set(CMAKE_CPPFLAGS_FLAGS "${CMAKE_CPPFLAGS_FLAGS} -I. -MMD -MP")
@@ -32,8 +32,7 @@ set(N2J_SOURCES ${PROJECT_SOURCE_DIR}/source/zita-n2j.cc
         ${PROJECT_SOURCE_DIR}/source/netrx.cc
         ${PROJECT_SOURCE_DIR}/source/pxthread.cc
         ${PROJECT_SOURCE_DIR}/source/lfqueue.cc
-        ${PROJECT_SOURCE_DIR}/source/zsockets.cc
-        ${PROJECT_SOURCE_DIR}/source/syncrx.cc)
+        ${PROJECT_SOURCE_DIR}/source/zsockets.cc)
 
 add_executable(ovzita-j2n ${PROJECT_SOURCE_DIR}/source/zita-j2n.cc ${J2N_SOURCES})
 add_executable(ovzita-n2j ${PROJECT_SOURCE_DIR}/source/zita-n2j.cc ${N2J_SOURCES})
