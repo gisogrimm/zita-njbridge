@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //
-//  Copyright (C) 2013-2016 Fons Adriaensen <fons@linuxaudio.org>
+//  Copyright (C) 2013-2017 Fons Adriaensen <fons@linuxaudio.org>
 //    
 //  This program is free software; you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -38,12 +38,12 @@ public:
     int start (Lfq_audio     *audioq,
                Lfq_int32     *commq,
                Lfq_timedata  *timeq,
-	       int           *chlist,
-	       int            psmax,
-	       int            fsamp,
-	       int            fsize,
+               int           *chlist,
+               int            psmax,
+               int            fsamp,
+               int            fsize,
                int            rtprio,
-	       int            sockfd);
+               int            sockfd);
 
 private:
 

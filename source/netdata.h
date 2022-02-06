@@ -34,8 +34,6 @@ public:
     Netdata (int size);
     ~Netdata (void);
 
-    friend class Netrx;
-    
     enum { MAXCHAN = 64 };
     enum
     {

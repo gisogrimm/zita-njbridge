@@ -23,11 +23,8 @@
 
 
 #include <sys/types.h>
-#ifdef _WIN32
-    #include <winsock.h>
-#else
-    #include <netdb.h>
-#endif
+#include <netdb.h>
+
 
 class Sockaddr
 {

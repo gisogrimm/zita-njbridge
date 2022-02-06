@@ -136,6 +136,12 @@ is 'zita-j2n' or 'zita-n2j'.
 .br
 Select the Jack server to connect to.
 
+.TP
+.B --ipv4
+.B --ipv6
+.br
+Use only the specified IP address type.
+
 .SS zita-j2n options
 
 .TP
@@ -201,11 +207,12 @@ two sample rates, in the range 16..96. See above for details.
 .TP
 .B --info
 .br
-Print additional diagnostic information. Three values will
-be printed twice per second: The average resampler control
-loop error in frames, the resampler ratio correction factor,
-and the minumum number of frames available in the receive buffer.
-
+Print additional diagnostic information. Four values will
+be printed four times per second: the number of jack periods
+during the last 1/4 second, the average resampler control
+loop error in frames, the average resampler ratio correction
+and the minumum number of frames available in the receive
+buffer.
 
 .SH "AUTHOR"
 zita-j2n, zita-n2j and this manual page were written

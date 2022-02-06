@@ -16,7 +16,7 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 // ----------------------------------------------------------------------------
-#include <stdio.h>
+
 
 #include <stdlib.h>
 #include <string.h>
@@ -42,12 +42,12 @@ Netrx::~Netrx (void)
 int Netrx::start (Lfq_audio     *audioq,
                   Lfq_int32     *commq,
                   Lfq_timedata  *timeq,
-		  int           *chlist,
-		  int            psmax,
-		  int            fsamp,
-		  int            fsize,
+                  int           *chlist,
+                  int            psmax,
+                  int            fsamp,
+                  int            fsize,
                   int            rtprio,
-		  int            sockfd)
+                  int            sockfd)
 {
     _audioq = audioq;
     _commq  = commq;
@@ -60,7 +60,7 @@ int Netrx::start (Lfq_audio     *audioq,
 
     // Compute DLL filter coefficients.
     _dt = (double) _fsize / fsamp;
-    _w1 = 2 * M_PI * 0.05 * _dt;
+    _w1 = 6.28 * 0.05 * _dt;
     _w2 = _w1 * _w1;
     _w1 *= 3.0;
 
@@ -79,108 +79,101 @@ void Netrx::thr_main (void)
     while (_state < TERM)
     {
         // Wait for packet, get timestamp.
-	rv = recv (_sockfd, _packet->data (), _packet->size (), 0);
+        rv = recv (_sockfd, _packet->data (), _packet->size (), 0);
         tr = tjack (jack_get_time ());
-	
-	// Check socket status.
-	if (rv <= 0)
-	{
-	    _state = FAIL;
-	    send (_state, 0, 0.0, 0, 0);
-	    break;
-	}
+        
+        // Check socket status.
+        if (rv <= 0)
+        {
+            _state = FAIL;
+            send (_state, 0, 0.0, 0, 0);
+            break;
+        }
 
-	// Basic packet validity check.
-	pt = _packet->check_ptype ();
-	if (pt < 0) continue;
+        // Basic packet validity check.
+        pt = _packet->check_ptype ();
+        if (pt < 0) continue;
 
-	// Check for termination or suspend.
+        // Check for termination or suspend.
         fl = _packet->get_flags ();
-	if (fl & Netdata::FL_TERM)
-	{
-	    _state = TERM;
-	    send (_state, 0, 0.0, 0, 0);
-	    break;
-	}
-	if (fl & Netdata::FL_SUSP)
-	{
-	    _state = WAIT;
-	    send (_state, 0, 0.0, 0, 0);
-	    continue;
-	}
+        if (fl & Netdata::FL_TERM)
+        {
+            _state = TERM;
+            send (_state, 0, 0.0, 0, 0);
+            break;
+        }
+        if (fl & Netdata::FL_SUSP)
+        {
+            _state = WAIT;
+            send (_state, 0, 0.0, 0, 0);
+            continue;
+        }
 
-	// // Get time marker if descriptor packet.
-	// if ((pt == Netdata::TY_ADESC) && (rv == Netdata::DPEND))
-	// {
-   	//     send (TNTP, _packet->get_tfcnt (), 0.0,
-	// 	  _packet->get_tsecs (), _packet->get_tfrac ());
-	// }
-
-	// Ignore packet if not sample data.
-	if (pt != Netdata::TY_ADATA) continue;
+        // Ignore packet if not sample data.
+        if (pt != Netdata::TY_ADATA) continue;
 
         // Check for commands from the Jack thread.
         if (_commq->rd_avail ())
-	{
-	    _state = _commq->rd_int32 ();
-	    if (_state == PROC) _first = true;
-	}
+        {
+            _state = _commq->rd_int32 ();
+            if (_state == PROC) _first = true;
+        }
 
-	// Ignore data if not yet active.
+        // Ignore data if not yet active.
         if (_state != PROC) continue;
 
         // Apply timing correction from sender.
         tr -= 1e-6 * _packet->get_dtime ();
 
-	dc = 0;
-	fc = _packet->get_count ();
-	if (_first)
-	{
-   	    // First packet must be a timed one.
-	    if (fl & Netdata::FL_TIMED)
-	    {
-   	        _first = false;
-		_audioq->wr_commit (fc);
-	        _t0 = tr;
-	    }
-	    else continue;
-	}
-	else
-	{
-	    // Check frame count continuity.
- 	    dc = fc - _audioq->nwr ();
-	    if (dc > 0)
-	    {
-		// Missing frames, replace by silence.
-	         write_zeros (dc);
-		 _t0 += (double) dc / _fsamp;
-	    }
-	    if (dc < 0)
-	    {
-		// Packet out of order, already
-		// replaced by silence so ignore.
+        dc = 0;
+        fc = _packet->get_count ();
+        if (_first)
+        {
+            // First packet must be a timed one.
+            if (fl & Netdata::FL_TIMED)
+            {
+                _first = false;
+                _audioq->wr_commit (fc);
+                _t0 = tr;
+            }
+            else continue;
+        }
+        else
+        {
+            // Check frame count continuity.
+            dc = fc - _audioq->nwr ();
+            if (dc > 0)
+            {
+                // Missing frames, replace by silence.
+                write_zeros (dc);
+                _t0 = tjack_diff (_t0, -dc / (double) _fsamp);
+            }
+            else if (dc < 0)
+            {
+                // Packet out of order, already
+                // replaced by silence so ignore.
                 continue;
-	    }
-	    if (fl & Netdata::FL_TIMED)
-	    {
-  	        // Update the DLL.
+            }
+            if (fl & Netdata::FL_TIMED)
+            {
+                // Update the DLL.
                 err = tjack_diff (tr, _t0);
-	        if (err >  _dt) err =  _dt;
-	        if (err < -_dt) err = -_dt;
-		_t0 += _w1 * err;
-	        _dt += _w2 * err;
-	    }
-	}
+                if (err >  _dt) err =  _dt;
+                if (err < -_dt) err = -_dt;
+                _t0 += _w1 * err;
+                _dt += _w2 * err;
+            }
+        }
 
-	if (fl & Netdata::FL_TIMED)
-	{
-	    // Send timing data to Jack thread and update DLL.
-	    send (_state, _audioq->nwr (), _t0, 0, 0);
-  	    _t0 = tjack_diff (_t0, -_dt);
-	}
+        if (fl & Netdata::FL_TIMED)
+        {
+            // Send timing data to Jack thread.
+            send (_state, _audioq->nwr (), _t0, 0, 0);
+            _t0 = tjack_diff (_t0, -_dt);
+        }
 
-	// Write samples to queue.
-	write_audio (_packet);
+        // Write samples to queue.
+        write_audio (_packet);
     }
     
     delete _packet;
@@ -198,8 +191,8 @@ void Netrx::send (int flags, int32_t count, double tjack, uint32_t tsecs, uint32
         D->_flags = flags;
         D->_count = count;
         D->_tjack = tjack;
-	D->_tsecs = tsecs;
-	D->_tfrac = tfrac;
+        D->_tsecs = tsecs;
+        D->_tfrac = tfrac;
         _timeq->wr_commit ();
     }
 }
@@ -225,26 +218,26 @@ int Netrx::write_audio (Netdata *D)
     // This loop takes care of wraparound.
     for (n = nfp; n; n -= k)
     {
-	q = _audioq->wr_datap ();   // Audio queue write pointer.
-	k = _audioq->wr_linav ();   // Number of frames that can be
-	if (k > n) k = n;           // written without wraparound.
-	// Loop over all selected channels.
-	for (j = 0; j < ncq; j++)
-	{
-	    c = _chlist [j];
-	    if (c < ncp)
-	    {
-		// Copy from packet to audio queue.
-		D->get_audio (c, nfp - n, k, q, ncq);
-	    }
-	    else
-	    {
-		// Channel not available, write zeros.
-		for (i = 0; i < k; i++) q [i * ncq] = 0;
-	    }
-	    q++;
-	}
-	_audioq->wr_commit (k);    // Update audio queue state.
+        q = _audioq->wr_datap ();   // Audio queue write pointer.
+        k = _audioq->wr_linav ();   // Number of frames that can be
+        if (k > n) k = n;           // written without wraparound.
+        // Loop over all selected channels.
+        for (j = 0; j < ncq; j++)
+        {
+            c = _chlist [j];
+            if (c < ncp)
+            {
+                // Copy from packet to audio queue.
+                D->get_audio (c, nfp - n, k, q, ncq);
+            }
+            else
+            {
+                // Channel not available, write zeros.
+                for (i = 0; i < k; i++) q [i * ncq] = 0;
+            }
+            q++;
+        }
+        _audioq->wr_commit (k);    // Update audio queue state.
     }
     return nfp;
 }
@@ -258,11 +251,11 @@ int Netrx::write_zeros (int nfram)
     // This loop takes care of wraparound.
     for (n = nfram; n; n -= k)
     {
-	q = _audioq->wr_datap ();  // Audio queue write pointer.
-	k = _audioq->wr_linav ();  // Number of frames that can be
-	if (k > n) k = n;          // written without wraparound.
-	memset (q, 0, k * _audioq->nchan () * sizeof (float));
-	_audioq->wr_commit (k);    // Update audio queue state.
+        q = _audioq->wr_datap ();  // Audio queue write pointer.
+        k = _audioq->wr_linav ();  // Number of frames that can be
+        if (k > n) k = n;          // written without wraparound.
+        memset (q, 0, k * _audioq->nchan () * sizeof (float));
+        _audioq->wr_commit (k);    // Update audio queue state.
     }
     return nfram;
 }

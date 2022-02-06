@@ -40,7 +40,6 @@ public:
     void start (Lfq_audio     *audioq,
                 Lfq_int32     *commq, 
 	        Lfq_timedata  *timeq,
-	        Lfq_timedata  *syncq,
 		Lfq_infodata  *infoq,
                 double         ratio,
 	        int            delay,
@@ -63,9 +62,6 @@ private:
     void silence (int nframes);
     void capture (int nframes);
     void sendinfo (int state, double error, double ratio, int nfram);
-    void procsync (int32_t ctx, uint32_t stx, uint32_t ftx);
-
-    virtual void thr_main (void) {}
 
     void jack_buffsize (int bsize);
     void jack_freewheel (int state);
@@ -87,7 +83,6 @@ private:
     Lfq_audio      *_audioq;
     Lfq_int32      *_commq; 
     Lfq_timedata   *_timeq;
-    Lfq_timedata   *_syncq;
     Lfq_infodata   *_infoq;
     double          _ratio;
     int             _ppsec;
@@ -103,8 +98,6 @@ private:
 
     double          _ts_ext;
     double          _tj_ext;
-    int             _syncnt;
-    double          _syndel;
     
     double          _w0;
     double          _w1;

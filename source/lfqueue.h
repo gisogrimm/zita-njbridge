@@ -197,7 +197,7 @@ public:
     void reset (void)
     {
         _nwr = _nrd = 0;
-	memset (_data, 0, _nfram * _nchan * sizeof (float));
+        memset (_data, 0, _nfram * _nchan * sizeof (float));
     }
 
     int     nfram (void) const { return _nfram; } 

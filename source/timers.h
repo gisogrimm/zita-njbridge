@@ -58,8 +58,10 @@ inline double tsyst_diff (double a, double b)
 
 inline double tjack (jack_time_t t, double dt = 0)
 {
-    int32_t u = (int32_t)(t & 0xFFFFFFFFLL);
-    return 1e-6 * u;
+    int32_t v;
+
+    v = (int32_t)(t & 0xFFFFFFFFLL);
+    return 1e-6 * v + dt;
 }
 
 

@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //
-//  Copyright (C) 2013-2016 Fons Adriaensen <fons@linuxaudio.org>
+//  Copyright (C) 2013-2018 Fons Adriaensen <fons@linuxaudio.org>
 //    
 //  This program is free software; you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -228,7 +228,7 @@ int Jacktx::jack_process (int nframes)
     // not correctly indicate such gaps. A patch to fix this
     // has been submitted, doing essentially the same as the
     // simple code computing 'nskip' below.
-    // The second use is include the number of microseconds
+    // The second use is to include the number of microseconds
     // since cycle start in the transmitted audio packets.
     // By doing this the receiver has timing data that depends
     // only on the network delay and not on the position of the

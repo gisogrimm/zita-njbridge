@@ -35,10 +35,10 @@ Nettx::~Nettx (void)
 
 
 void Nettx::start (Lfq_packdata   *packq, 
-		   Lfq_timedata   *timeq,
-		   Netdata        *descpack,
- 	           int             sockfd,
-		   int             rtprio)
+                   Lfq_timedata   *timeq,
+                   Netdata        *descpack,
+                   int             sockfd,
+                   int             rtprio)
 {
     _packq = packq;
     _timeq = timeq;
@@ -62,29 +62,29 @@ void Nettx::thr_main (void)
     while (true)
     {
         _sema.wait ();
-	
-	if (_stop)
-	{
-	    _descpack->set_flags (Netdata::FL_TERM);
+        
+        if (_stop)
+        {
+            _descpack->set_flags (Netdata::FL_TERM);
             send (_sockfd, (char *) _descpack->data (), _descpack->dlen (), 0);
             sock_close (_sockfd);
- 	    return;
-	}
+            return;
+        }
         if (_packq->rd_avail () > 0)
-	{
-	    D = _packq->rd_datap ();
-	    send (_sockfd, (char *) D->data (), D->dlen (), 0);
-	    _packq->rd_commit ();
-	}
-	else
-	{
-	    if (_timeq->rd_avail () > 0)
-	    {
-		M = _timeq->rd_datap ();
-		_descpack->set_tmark (M->_count, M->_tsecs, M->_tfrac);
-		_timeq->rd_commit ();
-	    }
+        {
+            D = _packq->rd_datap ();
+            send (_sockfd, (char *) D->data (), D->dlen (), 0);
+            _packq->rd_commit ();
+        }
+        else
+        {
+            if (_timeq->rd_avail () > 0)
+            {
+                M = _timeq->rd_datap ();
+                _descpack->set_tmark (M->_count, M->_tsecs, M->_tfrac);
+                _timeq->rd_commit ();
+            }
             send (_sockfd, (char *) _descpack->data (), _descpack->dlen (), 0);
-	}
+        }
     }
 }

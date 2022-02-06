@@ -23,7 +23,6 @@
 
 
 #include <sys/types.h>
-#include <pthread.h>
 #include "pxthread.h"
 #include "lfqueue.h"
 #include "netdata.h"
@@ -37,15 +36,15 @@ public:
     virtual ~Nettx (void);
     
     void start (Lfq_packdata *packq,
-		Lfq_timedata *timeq, 
-		Netdata      *descpack,
-		int           sockfd,
-	        int           rtprio);
+                Lfq_timedata *timeq, 
+                Netdata      *descpack,
+                int           sockfd,
+                int           rtprio);
 
     void stop (void)
     {
-	_stop = true;
-	trigger ();
+        _stop = true;
+        trigger ();
     }
 
     void trigger (void);

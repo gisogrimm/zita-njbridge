@@ -1,6 +1,6 @@
 // ----------------------------------------------------------------------------
 //
-//  Copyright (C) 2013-2016 Fons Adriaensen <fons@linuxaudio.org>
+//  Copyright (C) 2013-2020 Fons Adriaensen <fons@linuxaudio.org>
 //    
 //  This program is free software; you can redistribute it and/or modify
 //  it under the terms of the GNU General Public License as published by
@@ -24,14 +24,15 @@
 #include <signal.h>
 #include <getopt.h>
 #include <math.h>
+#ifndef _WIN32
+#include <sys/mman.h>
+#endif
 #include "jacktx.h"
 #include "nettx.h"
 #include "lfqueue.h"
 #include "netdata.h"
 #include "zsockets.h"
-#ifndef _WIN32
-    #include <sys/mman.h>
-#endif
+
 
 #define APPNAME "zita-j2n"
 
@@ -52,12 +53,14 @@ static const char   *dev_arg   = 0;
 static int           mtu_arg   = 1500;
 static int           hops_arg  = 1;
 static int           form_arg  = Netdata::FM_24BIT;
+static bool          ipv4_opt  = false;
+static bool          ipv6_opt  = false;
 
 
 static void help (void)
 {
     fprintf (stderr, "\n%s-%s\n", APPNAME, VERSION);
-    fprintf (stderr, "(C) 2013-2016 Fons Adriaensen  <fons@linuxaudio.org>\n");
+    fprintf (stderr, "(C) 2013-2020 Fons Adriaensen  <fons@linuxaudio.org>\n");
     fprintf (stderr, "Send audio to zita-n2j.\n\n");
     fprintf (stderr, "Usage: %s <options> ip-address ip-port \n", APPNAME);
     fprintf (stderr, "       %s <options> ip-address ip-port interface\n", APPNAME);
@@ -71,11 +74,14 @@ static void help (void)
     fprintf (stderr, "  --float             Send floating point samples\n");
     fprintf (stderr, "  --mtu   <size>      Maximum packet size [%d]\n", mtu_arg);
     fprintf (stderr, "  --hops  <hops>      Number of hops for multicast [%d]\n", hops_arg);
+    fprintf (stderr, "  --ipv4              Use IPV4 only\n");
+    fprintf (stderr, "  --ipv6              Use IPV6 only\n");
+
     exit (1);
 }
 
 
-enum { HELP, NAME, SERV, CHAN, BIT16, BIT24, FLT32, MTU, HOPS };
+enum { HELP, NAME, SERV, CHAN, BIT16, BIT24, FLT32, MTU, HOPS, IPV4, IPV6 };
 
 
 static struct option options [] = 
@@ -89,6 +95,8 @@ static struct option options [] =
     { "16bit", 0, 0, BIT16 },
     { "24bit", 0, 0, BIT24 },
     { "float", 0, 0, FLT32 },
+    { "ipv4",  0, 0, IPV4  },
+    { "ipv6",  0, 0, IPV6  },
     { 0, 0, 0, 0 }
 };
 
@@ -99,8 +107,8 @@ static int getint (const char *optname)
 
     if (sscanf (optarg, "%d", &v) != 1)
     {
-	fprintf (stderr, "Bad option argument: --%s %s\n", optname, optarg);
-	exit (1);
+        fprintf (stderr, "Bad option argument: --%s %s\n", optname, optarg);
+        exit (1);
     }
     return v;
 }
@@ -112,37 +120,43 @@ static void procoptions (int ac, char *av [])
 
     while ((k = getopt_long (ac, av, "", options, 0)) != -1)
     {
-	switch (k)
-	{
+        switch (k)
+        {
         case '?':
-	case HELP:
-	    help ();
-	    break;
-	case NAME:
-	    name_arg = optarg;
-	    break;
-	case SERV:
-	    serv_arg = optarg;
-	    break;
-	case CHAN:
-	    chan_arg = getint ("chan");
-	    break;
-	case MTU:
-	    mtu_arg = getint ("mtu");
-	    break;
-	case HOPS:
-	    hops_arg = getint ("hops");
-	    break;
-	case BIT16:
-	    form_arg = Netdata::FM_16BIT;
-	    break;
-	case BIT24:
-	    form_arg = Netdata::FM_24BIT;
-	    break;
+        case HELP:
+            help ();
+            break;
+        case NAME:
+            name_arg = optarg;
+            break;
+        case SERV:
+            serv_arg = optarg;
+            break;
+        case CHAN:
+            chan_arg = getint ("chan");
+            break;
+        case MTU:
+            mtu_arg = getint ("mtu");
+            break;
+        case HOPS:
+            hops_arg = getint ("hops");
+            break;
+        case BIT16:
+            form_arg = Netdata::FM_16BIT;
+            break;
+        case BIT24:
+            form_arg = Netdata::FM_24BIT;
+            break;
         case FLT32:
-	    form_arg = Netdata::FM_FLOAT;
-	    break;
- 	}
+            form_arg = Netdata::FM_FLOAT;
+            break;
+        case IPV4:
+            ipv4_opt = true;
+            break;
+        case IPV6:
+            ipv6_opt = true;
+            break;
+        }
     }
     if (ac < optind + 2) help ();
     if (ac > optind + 3) help ();
@@ -165,14 +179,14 @@ static void checkstatus (void)
 
     while (infoq->rd_avail ())
     {
-	state = infoq->rd_int32 ();
-	switch (state)
-	{
-	case Jacktx::TERM:
-	    printf ("Fatal error condition, terminating.\n");
-	    stop = true;
-	    return;
-	}
+        state = infoq->rd_int32 ();
+        switch (state)
+        {
+        case Jacktx::TERM:
+            printf ("Fatal error condition, terminating.\n");
+            stop = true;
+            return;
+        }
     }
 }
 
@@ -183,22 +197,22 @@ static int opensocket (Sockaddr *A)
 
     if (A->is_multicast ())
     {
-	if (dev_arg) fd = sock_open_mcsend (A, dev_arg, 1, hops_arg);
+        if (dev_arg) fd = sock_open_mcsend (A, dev_arg, 1, hops_arg);
         else
-	{
-	    fprintf (stderr, "Multicast requires a network device.\n");
-	    exit (1);
-	}
+        {
+            fprintf (stderr, "Multicast requires a network device.\n");
+            exit (1);
+        }
     }
     else
     {
-	if (dev_arg) fprintf (stderr, "Ignored extra argument '%s'.\n", dev_arg);
-	fd = sock_open_dgram (A, 0);
+        if (dev_arg) fprintf (stderr, "Ignored extra argument '%s'.\n", dev_arg);
+        fd = sock_open_dgram (A, 0);
     }
     if (fd < 0)
     {
-	fprintf (stderr, "Failed to open socket.\n");
-	exit (1);
+        fprintf (stderr, "Failed to open socket.\n");
+        exit (1);
     }
     return fd;
 }
@@ -208,7 +222,7 @@ static int opensocket (Sockaddr *A)
 int main (int ac, char *av [])
 {
     Sockaddr        A;
-    int             sockfd, psize, ppper, npack;
+    int             sockfd, psize, ppper, npack, ipfam;
     Jacktx         *jacktx = 0;
     Nettx          *nettx = 0;
 
@@ -216,27 +230,29 @@ int main (int ac, char *av [])
 
     if ((chan_arg < 1) || (chan_arg > Netdata::MAXCHAN))
     {
-	fprintf (stderr, "Number of channels is out of range.\n");
-	exit (1);
+        fprintf (stderr, "Number of channels is out of range.\n");
+        exit (1);
     }
-    if (A.set_addr (AF_UNSPEC, SOCK_DGRAM, 0, addr_arg))
+    
+    ipfam = AF_UNSPEC;
+    if (ipv4_opt) ipfam = AF_INET;
+    if (ipv6_opt) ipfam = AF_INET6;
+    if (A.set_addr (ipfam, SOCK_DGRAM, 0, addr_arg))
     {
-	fprintf (stderr, "Address resolution failed.\n");
-	exit (1);
+        fprintf (stderr, "Address resolution failed.\n");
+        exit (1);
     }
     if ((port_arg < 1) || (port_arg > 65535))
     {
-	fprintf (stderr, "Port number is out of range.\n");
-	exit (1);
+        fprintf (stderr, "Port number is out of range.\n");
+        exit (1);
     }
     A.set_port (port_arg);
 
-#ifdef __linux__
     if (mlockall (MCL_CURRENT | MCL_FUTURE))
     {
         fprintf (stderr, "Warning: memory lock failed.\n");
     }
-#endif
 
     jacktx = new Jacktx (name_arg, serv_arg, chan_arg);
     nettx  = new Nettx;
@@ -245,7 +261,7 @@ int main (int ac, char *av [])
     sockfd = opensocket (&A);
     psize = mtu_arg - ((A.family () == AF_INET6) ? 48 : 28);
     ppper = Netdata::packetsperperiod (psize, jacktx->bsize (), form_arg, chan_arg);
-    npack = ppper * (int)(ceil (0.05 * jacktx->fsamp () / jacktx->bsize ()));
+    npack = ppper * (int)(ceil (0.25 * jacktx->fsamp () / jacktx->bsize ()));
     packq = new Lfq_packdata (npack, psize);
     timeq = new Lfq_timedata (4);
     infoq = new Lfq_int32 (16);
@@ -257,9 +273,9 @@ int main (int ac, char *av [])
     signal (SIGINT, siginthandler);
     while (! stop)
     {
-	usleep (500000);
+        usleep (500000);
         nettx->trigger ();
-	checkstatus ();
+        checkstatus ();
     }
 
     nettx->stop ();

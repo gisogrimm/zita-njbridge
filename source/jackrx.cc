@@ -134,7 +134,6 @@ int Jackrx::jack_static_process (jack_nframes_t nframes, void *arg)
 void Jackrx::start (Lfq_audio      *audioq,
                     Lfq_int32      *commq, 
                     Lfq_timedata   *timeq,
-                    Lfq_timedata   *syncq,
                     Lfq_infodata   *infoq,
                     double         ratio,
                     int            delay,
@@ -143,7 +142,6 @@ void Jackrx::start (Lfq_audio      *audioq,
     _audioq = audioq;
     _commq = commq;
     _timeq = timeq;
-    _syncq = syncq;
     _infoq = infoq;
     _ratio = ratio;
     _rcorr = 1.0;
@@ -187,8 +185,6 @@ void Jackrx::initsync (void)
     // Activate the netrx thread,
     _commq->wr_int32 (Netrx::PROC);
     _state = SYNC0;
-    _syncnt = 0;
-    _syndel = 0.0;
     sendinfo (_state, 0, 0, 0);
 }
 
@@ -276,7 +272,7 @@ void Jackrx::sendinfo (int state, double error, double ratio, int nfram)
         I->_error = error;
         I->_ratio = ratio;
         I->_nfram = nfram;
-        I->_syncc = _syncnt;
+        I->_syncc = 0;
         _infoq->wr_commit ();
     }
 }
@@ -387,10 +383,6 @@ int Jackrx::jack_process (int nframes)
             _k_a1 = D->_count;
             _t_a1 = D->_tjack;
             break;
-//      case Netrx::TNTP:
-//          // Frame count and system time at sender.
-//          procsync (D->_count, D->_tsecs, D->_tfrac);
-//          break;
         case Netrx::TERM:
             // Sender terminated.
             _state = TXEND;
@@ -462,50 +454,3 @@ int Jackrx::jack_process (int nframes)
 }
 
 
-// void Jackrx::procsync (int32_t fc_ref, uint32_t s_ref, uint32_t f_ref)
-// {
-//     int       k;
-//     double    ts_ref, dj, ds, del;
-//     Timedata  *D;
-
-//     ts_ref = tntp (s_ref, f_ref);
-
-//     while (_syncq->rd_avail () > 1) _syncq->rd_commit ();
-//     if (_syncq->rd_avail () > 0)
-//     {
-//         D = _syncq->rd_datap ();
-//         _tj_ext = D->_tjack;
-//         _ts_ext = tntp (D->_tsecs, D->_tfrac);
-//         _syncq->rd_commit ();
-//     }
-//     else
-//     {
-//         _syndel = 0.0;
-//         _syncnt = 0;
-//         return;
-//     }
-    
-//     ds = tsyst_diff (ts_ref, _ts_ext);
-//     dj = tjack_diff (_tj_ext, _t_a0);
-//     del = (ds + dj) * _fsamp / _ratio - fc_ref + _k_a0 + _bsize;
-//     if (_syncnt == 0)
-//     {
-//         _syndel = del;
-//         _syncnt++;
-//     }
-//     else if (_syncnt < 10)
-//     {
-//         _syndel += 0.25 * (del - _syndel);
-//         _syncnt++;
-//     }
-//     else
-//     {
-//         _syndel += 0.025 * (del - _syndel);
-//     }
-//     if (_syncnt == 10)
-//     {
-//         k = (int)(_syndel - _delay);
-//         if (abs (k) > 500) _audioq->rd_commit (-k);
-//         _delay = _syndel;
-//     }
-// }
