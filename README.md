@@ -1,3 +1,7 @@
+This is a fork of the tool by Fons Adriaensen
+(http://kokkinizita.linuxaudio.org/linuxaudio/index.html)[http://kokkinizita.linuxaudio.org/linuxaudio/index.html]
+with only minor additions.
+
 # Zita-njbridge
 
 Command line Jack clients to transmit full quality
