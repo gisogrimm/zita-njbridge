@@ -25,6 +25,7 @@
 #include "jackrx.h"
 #include "timers.h"
 #include "netrx.h"
+#include <jack/thread.h>
 
 
 Jackrx::Jackrx (const char *jname, const char*jserv, int nchan, const int *clist) :
@@ -45,10 +46,9 @@ Jackrx::~Jackrx (void)
 
 void Jackrx::init (const char *jname, const char *jserv, const int *clist)
 {
-    int                 i, opts, spol, flags;
+    int                 i, opts, flags;
     char                s [16];
     jack_status_t       stat;
-    struct sched_param  spar;
 
     opts = JackNoStartServer;
     if (jserv) opts |= JackServerName;
@@ -83,8 +83,7 @@ void Jackrx::init (const char *jname, const char *jserv, const int *clist)
         _ports [i] = jack_port_register (_client, s, JACK_DEFAULT_AUDIO_TYPE,
                                          flags | JackPortIsOutput, 0);
     }
-    pthread_getschedparam (jack_client_thread_id (_client), &spol, &spar);
-    _rprio = spar.sched_priority;
+    _rprio = jack_client_real_time_priority(_client);
     _buff = new float [_bsize * _nchan];
     _state = IDLE;
 }
