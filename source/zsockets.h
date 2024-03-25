@@ -66,7 +66,9 @@ extern int sock_open_mcrecv(Sockaddr* addr, const char* iface);
 extern int sock_accept(int fd, Sockaddr* remote, Sockaddr* local);
 extern int sock_close(int fd);
 
+#ifndef _WIN32
 extern int sock_set_close_on_exec(int fd, bool flag);
+#endif
 extern int sock_set_no_delay(int fd, bool flag);
 extern int sock_set_write_buffer(int fd, size_t size);
 extern int sock_set_read_buffer(int fd, size_t size);

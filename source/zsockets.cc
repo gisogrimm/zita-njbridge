@@ -553,7 +553,8 @@ int sock_open_mcrecv(Sockaddr* addr, const char* iface)
             return -1;
         }
 #ifndef _WIN32
-        // use named interface only when not on windows (on windows use INADDR_ANY)
+        // use named interface only when not on windows (on windows use
+        // INADDR_ANY)
         struct ifreq ifreq;
         strncpy(ifreq.ifr_name, iface, 16);
         ifreq.ifr_name[15] = 0;
@@ -585,14 +586,20 @@ int sock_open_mcrecv(Sockaddr* addr, const char* iface)
 
 int sock_close(int fd)
 {
+#ifndef _WIN32
     shutdown(fd, SHUT_RDWR);
+#else
+    shutdown(fd, SD_BOTH);
+#endif
     return close(fd);
 }
 
+#ifndef _WIN32
 int sock_set_close_on_exec(int fd, bool flag)
 {
     return (fcntl(fd, F_SETFD, flag ? FD_CLOEXEC : 0) < 0) ? -1 : 0;
 }
+#endif
 
 int sock_set_no_delay(int fd, bool flag)
 {
