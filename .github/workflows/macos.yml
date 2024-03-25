@@ -14,8 +14,7 @@ jobs:
       with:
         fetch-depth: 0
     - name: dependencies
-      run: apt update &&
-           apt install --assume-yes git 
+      run: brew install pkgconfig jack coreutils
     - name: resampler
       run: make -C zita-resampler/source libzita-resampler.a
     - name: njbridge

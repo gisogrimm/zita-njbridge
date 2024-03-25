@@ -14,8 +14,8 @@ jobs:
       with:
         fetch-depth: 0
     - name: dependencies
-      run: apt update &&
-           apt install --assume-yes git 
+      run: sudo apt update &&
+           sudo apt install --assume-yes git libjack-jackd2-dev
     - name: resampler
       run: make -C zita-resampler/source libzita-resampler.a
     - name: njbridge
