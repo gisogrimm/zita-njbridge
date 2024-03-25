@@ -21,7 +21,9 @@
 #ifdef __APPLE__
 #include <machine/endian.h>
 #else
+#ifndef _WIN32
 #include <endian.h>
+#endif
 #endif
 #include <stdlib.h>
 #include <string.h>
