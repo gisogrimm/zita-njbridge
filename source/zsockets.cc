@@ -18,13 +18,17 @@
 // ----------------------------------------------------------------------------
 
 #include <fcntl.h>
+#ifndef _WIN32
 #include <netinet/tcp.h>
+#endif
 #include <stddef.h>
 #include <stdio.h> // for perror()
 #include <stdlib.h>
 #include <string.h>
+#ifndef _WIN32
 #include <sys/ioctl.h>
 #include <sys/un.h>
+#endif
 #include <unistd.h>
 #ifdef __APPLE__
 #include <netinet/in.h>
