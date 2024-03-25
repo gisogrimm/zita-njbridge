@@ -33,7 +33,7 @@ all:	zita-j2n zita-n2j zita-njbridge.1.gz zita-j2n.1.gz zita-n2j.1.gz
 ZITA-J2N_O = zita-j2n.o netdata.o jacktx.o nettx.o pxthread.o lfqueue.o zsockets.o
 $(ZITA-J2N_O):
 -include $(ZITA-J2N_O:%.o=%.d)
-zita-j2n:	LDLIBS += -lpthread $(shell pkg-config --libs jack)
+zita-j2n:	LDLIBS += -lpthread $(shell pkg-config --libs jack) -lws2_32
 zita-j2n:	$(ZITA-J2N_O)
 	$(CXX) $(LDFLAGS) -o $@ $(ZITA-J2N_O) $(LDLIBS)
 
@@ -41,7 +41,7 @@ zita-j2n:	$(ZITA-J2N_O)
 ZITA-N2J_O = zita-n2j.o netdata.o jackrx.o netrx.o pxthread.o lfqueue.o zsockets.o
 $(ZITA-N2J_O):
 -include $(ZITA-N2J_O:%.o=%.d)
-zita-n2j:	LDLIBS += -lzita-resampler -lpthread $(shell pkg-config --libs jack)
+zita-n2j:	LDLIBS += -lzita-resampler -lpthread $(shell pkg-config --libs jack) -lws2_32
 zita-n2j:	$(ZITA-N2J_O)
 	$(CXX) $(LDFLAGS) -o $@ $(ZITA-N2J_O) $(LDLIBS)
 
