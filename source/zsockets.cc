@@ -44,6 +44,17 @@
 #include <Iphlpapi.h>
 
 typedef u_short sa_family_t;
+
+struct ifreq {
+    char ifr_name[IFNAMSIZ];
+    struct sockaddr ifr_addr;
+};
+
+struct ip_mreq {
+    struct in_addr imr_multiaddr;
+    struct in_addr imr_interface;
+};
+
 #endif
 
 Sockaddr::Sockaddr(int family)
@@ -377,6 +388,7 @@ int sock_open_mcsend(Sockaddr* addr, const char* iface, int loop, int hops)
     ipar = 1;
     if(fam == AF_INET6)
     {
+      // IPv6:
         ipar = if_nametoindex(iface);
         if(setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &loop,
                       sizeof(loop)) ||
@@ -390,6 +402,7 @@ int sock_open_mcsend(Sockaddr* addr, const char* iface, int loop, int hops)
         }
     } else
     {
+      // IPv4:
         struct ifreq ifr;
         strncpy(ifr.ifr_name, iface, 16);
         ifr.ifr_name[15] = 0;
@@ -432,6 +445,7 @@ int sock_open_mcsend(Sockaddr* addr, const char* iface, int loop, int hops)
     ipar = 1;
     if(fam == AF_INET6)
     {
+      // IPv6:
         ipar = if_nametoindex(iface);
         if(setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, (char*)&loop,
                       sizeof(loop)) != 0 ||
@@ -445,6 +459,7 @@ int sock_open_mcsend(Sockaddr* addr, const char* iface, int loop, int hops)
         }
     } else
     {
+      // IPv4:
         struct sockaddr_in sin;
         memset(&sin, 0, sizeof(sin));
         sin.sin_family = AF_INET;
