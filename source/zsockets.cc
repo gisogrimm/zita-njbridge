@@ -55,10 +55,10 @@ void Sockaddr::reset(int family)
 int Sockaddr::set_addr(int family, int socktype, int protocol,
                        const char* address)
 {
-    // struct addrinfo H, *A;
-    struct sockaddr_un* U;
     int len;
 
+#ifndef _WIN32
+    struct sockaddr_un* U;
     if(family == AF_UNIX)
     {
         U = (struct sockaddr_un*)_data;
@@ -70,6 +70,7 @@ int Sockaddr::set_addr(int family, int socktype, int protocol,
         strcpy(U->sun_path, address);
         return 0;
     }
+#endif
 
     struct addrinfo hints, *res;
     memset(&hints, 0, sizeof hints);
@@ -123,12 +124,14 @@ int Sockaddr::get_addr(char* address, int len) const
     *address = 0;
     switch(S->sa_family)
     {
+#ifndef _WIN32
     case AF_UNIX:
     {
         struct sockaddr_un* U = (struct sockaddr_un*)_data;
         strcpy(address, U->sun_path);
         return 0;
     }
+#endif
     case AF_INET:
     {
         struct sockaddr_in* S4 = (struct sockaddr_in*)_data;
@@ -197,8 +200,10 @@ int Sockaddr::sa_len(void) const
     struct sockaddr* S = (struct sockaddr*)_data;
     switch(S->sa_family)
     {
+#ifndef _WIN32
     case AF_UNIX:
         return sizeof(struct sockaddr_un);
+#endif
     case AF_INET:
         return sizeof(struct sockaddr_in);
     case AF_INET6:
@@ -215,13 +220,19 @@ int sock_open_active(Sockaddr* remote, Sockaddr* local)
 
     fam = remote->family();
     len = remote->sa_len();
+#ifdef _WIN32
+    if(fam != AF_INET && fam != AF_INET6)
+#else
     if(fam != AF_INET && fam != AF_INET6 && fam != AF_UNIX)
+#endif
         return -1;
 
     fd = socket(fam, SOCK_STREAM, 0);
     if(fd < 0)
         return -1;
+#ifndef _WIN32
     if(fam != AF_UNIX)
+#endif
     {
         ipar = 1;
         if(setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (char*)&ipar, sizeof(int)))
@@ -262,8 +273,12 @@ int sock_open_passive(Sockaddr* local, int qlen)
 
     fam = local->family();
     len = local->sa_len();
+#ifdef _WIN32
+    if(fam != AF_INET && fam != AF_INET6)
+#else
     if(fam != AF_INET && fam != AF_INET6 && fam != AF_UNIX)
-        return -1;
+#endif
+      return -1;
 
     fd = socket(fam, SOCK_STREAM, 0);
     if(fd < 0)
@@ -284,7 +299,11 @@ int sock_accept(int fd, Sockaddr* remote, Sockaddr* local)
 
     fam = remote->family();
     len = remote->sa_len();
+#ifdef _WIN32
+    if(fam != AF_INET && fam != AF_INET6)
+#else
     if(fam != AF_INET && fam != AF_INET6 && fam != AF_UNIX)
+#endif
         return -1;
 
     newfd = accept(fd, remote->sa_ptr(), &len);
