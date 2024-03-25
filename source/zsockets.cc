@@ -219,110 +219,110 @@ int Sockaddr::sa_len(void) const
     return sizeof(struct sockaddr_storage);
 }
 
-int sock_open_active(Sockaddr* remote, Sockaddr* local)
-{
-    int fd, ipar;
-    socklen_t len;
-    sa_family_t fam;
+//int sock_open_active(Sockaddr* remote, Sockaddr* local)
+//{
+//    int fd, ipar;
+//    socklen_t len;
+//    sa_family_t fam;
+//
+//    fam = remote->family();
+//    len = remote->sa_len();
+//#ifdef _WIN32
+//    if(fam != AF_INET && fam != AF_INET6)
+//#else
+//    if(fam != AF_INET && fam != AF_INET6 && fam != AF_UNIX)
+//#endif
+//        return -1;
+//
+//    fd = socket(fam, SOCK_STREAM, 0);
+//    if(fd < 0)
+//        return -1;
+//#ifndef _WIN32
+//    if(fam != AF_UNIX)
+//#endif
+//    {
+//        ipar = 1;
+//        if(setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (char*)&ipar, sizeof(int)))
+//        {
+//            close(fd);
+//            return -1;
+//        }
+//    }
+//    if(local && (local->family() == fam))
+//    {
+//        if(bind(fd, local->sa_ptr(), len))
+//        {
+//            close(fd);
+//            return -1;
+//        }
+//    }
+//    if(connect(fd, remote->sa_ptr(), len))
+//    {
+//        close(fd);
+//        return -1;
+//    }
+//    if(local && local->family() == AF_UNSPEC)
+//    {
+//        if(getsockname(fd, local->sa_ptr(), &len))
+//        {
+//            close(fd);
+//            return -1;
+//        }
+//    }
+//    return fd;
+//}
 
-    fam = remote->family();
-    len = remote->sa_len();
-#ifdef _WIN32
-    if(fam != AF_INET && fam != AF_INET6)
-#else
-    if(fam != AF_INET && fam != AF_INET6 && fam != AF_UNIX)
-#endif
-        return -1;
+//int sock_open_passive(Sockaddr* local, int qlen)
+//{
+//    int fd;
+//    sa_family_t fam;
+//    socklen_t len;
+//
+//    fam = local->family();
+//    len = local->sa_len();
+//#ifdef _WIN32
+//    if(fam != AF_INET && fam != AF_INET6)
+//#else
+//    if(fam != AF_INET && fam != AF_INET6 && fam != AF_UNIX)
+//#endif
+//      return -1;
+//
+//    fd = socket(fam, SOCK_STREAM, 0);
+//    if(fd < 0)
+//        return -1;
+//    if(bind(fd, local->sa_ptr(), len) || (listen(fd, qlen) < 0))
+//    {
+//        close(fd);
+//        return -1;
+//    }
+//    return 0;
+//}
 
-    fd = socket(fam, SOCK_STREAM, 0);
-    if(fd < 0)
-        return -1;
-#ifndef _WIN32
-    if(fam != AF_UNIX)
-#endif
-    {
-        ipar = 1;
-        if(setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (char*)&ipar, sizeof(int)))
-        {
-            close(fd);
-            return -1;
-        }
-    }
-    if(local && (local->family() == fam))
-    {
-        if(bind(fd, local->sa_ptr(), len))
-        {
-            close(fd);
-            return -1;
-        }
-    }
-    if(connect(fd, remote->sa_ptr(), len))
-    {
-        close(fd);
-        return -1;
-    }
-    if(local && local->family() == AF_UNSPEC)
-    {
-        if(getsockname(fd, local->sa_ptr(), &len))
-        {
-            close(fd);
-            return -1;
-        }
-    }
-    return fd;
-}
-
-int sock_open_passive(Sockaddr* local, int qlen)
-{
-    int fd;
-    sa_family_t fam;
-    socklen_t len;
-
-    fam = local->family();
-    len = local->sa_len();
-#ifdef _WIN32
-    if(fam != AF_INET && fam != AF_INET6)
-#else
-    if(fam != AF_INET && fam != AF_INET6 && fam != AF_UNIX)
-#endif
-      return -1;
-
-    fd = socket(fam, SOCK_STREAM, 0);
-    if(fd < 0)
-        return -1;
-    if(bind(fd, local->sa_ptr(), len) || (listen(fd, qlen) < 0))
-    {
-        close(fd);
-        return -1;
-    }
-    return 0;
-}
-
-int sock_accept(int fd, Sockaddr* remote, Sockaddr* local)
-{
-    int newfd;
-    sa_family_t fam;
-    socklen_t len;
-
-    fam = remote->family();
-    len = remote->sa_len();
-#ifdef _WIN32
-    if(fam != AF_INET && fam != AF_INET6)
-#else
-    if(fam != AF_INET && fam != AF_INET6 && fam != AF_UNIX)
-#endif
-        return -1;
-
-    newfd = accept(fd, remote->sa_ptr(), &len);
-    if(newfd < 0)
-        return -1;
-    if(local && getsockname(newfd, local->sa_ptr(), &len))
-    {
-        close(newfd);
-        return -1;
-    }
-    return newfd;
-}
+//int sock_accept(int fd, Sockaddr* remote, Sockaddr* local)
+//{
+//    int newfd;
+//    sa_family_t fam;
+//    socklen_t len;
+//
+//    fam = remote->family();
+//    len = remote->sa_len();
+//#ifdef _WIN32
+//    if(fam != AF_INET && fam != AF_INET6)
+//#else
+//    if(fam != AF_INET && fam != AF_INET6 && fam != AF_UNIX)
+//#endif
+//        return -1;
+//
+//    newfd = accept(fd, remote->sa_ptr(), &len);
+//    if(newfd < 0)
+//        return -1;
+//    if(local && getsockname(newfd, local->sa_ptr(), &len))
+//    {
+//        close(newfd);
+//        return -1;
+//    }
+//    return newfd;
+//}
 
 int sock_open_dgram(Sockaddr* remote, Sockaddr* local)
 {
@@ -594,68 +594,68 @@ int sock_close(int fd)
     return close(fd);
 }
 
-#ifndef _WIN32
-int sock_set_close_on_exec(int fd, bool flag)
-{
-    return (fcntl(fd, F_SETFD, flag ? FD_CLOEXEC : 0) < 0) ? -1 : 0;
-}
-#endif
+//#ifndef _WIN32
+//int sock_set_close_on_exec(int fd, bool flag)
+//{
+//    return (fcntl(fd, F_SETFD, flag ? FD_CLOEXEC : 0) < 0) ? -1 : 0;
+//}
+//#endif
 
-int sock_set_no_delay(int fd, bool flag)
-{
-    int ipar = flag ? 1 : 0;
+//int sock_set_no_delay(int fd, bool flag)
+//{
+//    int ipar = flag ? 1 : 0;
+//
+//    return setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (char*)&ipar, sizeof(ipar));
+//}
 
-    return setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (char*)&ipar, sizeof(ipar));
-}
+//int sock_set_write_buffer(int fd, size_t size)
+//{
+//    return setsockopt(fd, SOL_SOCKET, SO_SNDBUF, (char*)&size, sizeof(size));
+//}
 
-int sock_set_write_buffer(int fd, size_t size)
-{
-    return setsockopt(fd, SOL_SOCKET, SO_SNDBUF, (char*)&size, sizeof(size));
-}
+//int sock_set_read_buffer(int fd, size_t size)
+//{
+//    return setsockopt(fd, SOL_SOCKET, SO_RCVBUF, (char*)&size, sizeof(size));
+//}
 
-int sock_set_read_buffer(int fd, size_t size)
-{
-    return setsockopt(fd, SOL_SOCKET, SO_RCVBUF, (char*)&size, sizeof(size));
-}
+//int sock_write(int fd, void* data, size_t size, size_t min)
+//{
+//    int n;
+//    size_t k;
+//
+//    if(min > size)
+//        min = size;
+//    for(k = 0; k < min; k += n)
+//    {
+//        n = write(fd, (char*)data + k, size - k);
+//        if(n <= 0)
+//            return n;
+//    }
+//    return k;
+//}
 
-int sock_write(int fd, void* data, size_t size, size_t min)
-{
-    int n;
-    size_t k;
+//int sock_read(int fd, void* data, size_t size, size_t min)
+//{
+//    int n;
+//    size_t k;
+//
+//    if(min > size)
+//        min = size;
+//    for(k = 0; k < min; k += n)
+//    {
+//        n = read(fd, (char*)data + k, size - k);
+//        if(n <= 0)
+//            return n;
+//    }
+//    return k;
+//}
 
-    if(min > size)
-        min = size;
-    for(k = 0; k < min; k += n)
-    {
-        n = write(fd, (char*)data + k, size - k);
-        if(n <= 0)
-            return n;
-    }
-    return k;
-}
-
-int sock_read(int fd, void* data, size_t size, size_t min)
-{
-    int n;
-    size_t k;
-
-    if(min > size)
-        min = size;
-    for(k = 0; k < min; k += n)
-    {
-        n = read(fd, (char*)data + k, size - k);
-        if(n <= 0)
-            return n;
-    }
-    return k;
-}
-
-int sock_sendto(int fd, void* data, size_t size, Sockaddr* addr)
-{
-    if(addr)
-        return sendto(fd, (char*)data, size, 0, addr->sa_ptr(), addr->sa_len());
-    return send(fd, (char*)data, size, 0);
-}
+//int sock_sendto(int fd, void* data, size_t size, Sockaddr* addr)
+//{
+//    if(addr)
+//        return sendto(fd, (char*)data, size, 0, addr->sa_ptr(), addr->sa_len());
+//    return send(fd, (char*)data, size, 0);
+//}
 
 int sock_recvfm(int fd, void* data, size_t size, Sockaddr* addr)
 {

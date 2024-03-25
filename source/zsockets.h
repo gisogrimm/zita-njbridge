@@ -24,8 +24,6 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
-#pragma comment(lib, "Ws2_32.lib")
-
 // ensure that you properly initialize and cleanup the Winsock library by
 // calling WSAStartup and WSACleanup functions respectively.
 
@@ -57,25 +55,25 @@ class Sockaddr {
     char _data[sizeof(struct sockaddr_storage)];
 };
 
-extern int sock_open_active(Sockaddr* remote, Sockaddr* local);
-extern int sock_open_passive(Sockaddr* local, int qlen);
+//extern int sock_open_active(Sockaddr* remote, Sockaddr* local);
+//extern int sock_open_passive(Sockaddr* local, int qlen);
 extern int sock_open_dgram(Sockaddr* remote, Sockaddr* local);
 extern int sock_open_mcsend(Sockaddr* addr, const char* iface, int loop,
                             int hops);
 extern int sock_open_mcrecv(Sockaddr* addr, const char* iface);
-extern int sock_accept(int fd, Sockaddr* remote, Sockaddr* local);
+//extern int sock_accept(int fd, Sockaddr* remote, Sockaddr* local);
 extern int sock_close(int fd);
 
-#ifndef _WIN32
-extern int sock_set_close_on_exec(int fd, bool flag);
-#endif
-extern int sock_set_no_delay(int fd, bool flag);
-extern int sock_set_write_buffer(int fd, size_t size);
-extern int sock_set_read_buffer(int fd, size_t size);
+//#ifndef _WIN32
+//extern int sock_set_close_on_exec(int fd, bool flag);
+//#endif
+//extern int sock_set_no_delay(int fd, bool flag);
+//extern int sock_set_write_buffer(int fd, size_t size);
+//extern int sock_set_read_buffer(int fd, size_t size);
 
-extern int sock_write(int fd, void* data, size_t size, size_t min);
-extern int sock_read(int fd, void* data, size_t size, size_t min);
-extern int sock_sendto(int fd, void* data, size_t size, Sockaddr* addr);
+//extern int sock_write(int fd, void* data, size_t size, size_t min);
+//extern int sock_read(int fd, void* data, size_t size, size_t min);
+//extern int sock_sendto(int fd, void* data, size_t size, Sockaddr* addr);
 extern int sock_recvfm(int fd, void* data, size_t size, Sockaddr* addr);
 
 #endif
