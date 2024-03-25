@@ -16,6 +16,8 @@ jobs:
     - name: dependencies
       run: sudo apt update &&
            sudo apt install --assume-yes git libjack-jackd2-dev
+    - name: cloneresampler
+      run: git clone https://github.com/gisogrimm/zita-resampler.git
     - name: resampler
       run: make -C zita-resampler/source libzita-resampler.a
     - name: njbridge
