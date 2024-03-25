@@ -41,7 +41,7 @@
 #include <errno.h>
 
 #ifdef _WIN32
-typedef u_short sa_family_t
+typedef u_short sa_family_t;
 #endif
 
 Sockaddr::Sockaddr(int family)
