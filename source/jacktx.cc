@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include "jacktx.h"
 #include "timers.h"
+#include <jack/thread.h>
 
 
 Jacktx::Jacktx (const char *jname, const char*jserv, int nchan) :
@@ -47,10 +48,9 @@ Jacktx::~Jacktx (void)
 
 void Jacktx::init (const char *jname, const char *jserv)
 {
-    int                 i, opts, spol, flags;
+    int                 i, opts, flags;
     char                s [64];
     jack_status_t       stat;
-    struct sched_param  spar;
 
     opts = JackNoStartServer;
     if (jserv) opts |= JackServerName;
@@ -85,8 +85,7 @@ void Jacktx::init (const char *jname, const char *jserv)
                                          flags | JackPortIsInput, 0);
     }
 
-    pthread_getschedparam (jack_client_thread_id (_client), &spol, &spar);
-    _rprio = spar.sched_priority;
+    _rprio = jack_client_real_time_priority(_client);
 }
 
 
