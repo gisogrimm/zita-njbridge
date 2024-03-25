@@ -17,7 +17,7 @@ jobs:
       with:
         msystem: UCRT64
         update: true
-        install: git vim zip mingw-w64-ucrt-x86_64-gcc make mingw-w64-ucrt-x86_64-jack2
+        install: git vim zip mingw-w64-ucrt-x86_64-gcc make mingw-w64-ucrt-x86_64-jack2 mingw-w64-ucrt-x86_64-pkgconf
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
