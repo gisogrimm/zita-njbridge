@@ -45,16 +45,6 @@
 
 typedef u_short sa_family_t;
 
-struct ifreq {
-    char ifr_name[IFNAMSIZ];
-    struct sockaddr ifr_addr;
-};
-
-struct ip_mreq {
-    struct in_addr imr_multiaddr;
-    struct in_addr imr_interface;
-};
-
 #endif
 
 Sockaddr::Sockaddr(int family)
@@ -546,7 +536,6 @@ int sock_open_mcrecv(Sockaddr* addr, const char* iface)
     } else
     {
         // IPv4
-        struct ifreq ifreq;
         struct ip_mreq mcreq;
         struct sockaddr_in W4, *A4;
 
@@ -563,21 +552,23 @@ int sock_open_mcrecv(Sockaddr* addr, const char* iface)
 #endif
             return -1;
         }
+#ifndef _WIN32
+        // use named interface only when not on windows (on windows use INADDR_ANY)
+        struct ifreq ifreq;
         strncpy(ifreq.ifr_name, iface, 16);
         ifreq.ifr_name[15] = 0;
         ifreq.ifr_addr.sa_family = AF_INET;
         if(ioctl(fd, SIOCGIFADDR, &ifreq))
         {
-#ifdef _WIN32
-            closesocket(fd);
-#else
             close(fd);
-#endif
             return -1;
         }
-        mcreq.imr_multiaddr.s_addr = A4->sin_addr.s_addr;
         mcreq.imr_interface.s_addr =
             ((struct sockaddr_in*)(&ifreq.ifr_addr))->sin_addr.s_addr;
+#else
+        mcreq.imr_interface.s_addr = INADDR_ANY;
+#endif
+        mcreq.imr_multiaddr.s_addr = A4->sin_addr.s_addr;
         if(setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char*)&mcreq,
                       sizeof(mcreq)))
         {
