@@ -1,0 +1,30 @@
+name: Windows make
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+    - uses: msys2/setup-msys2@v2
+      with:
+        msystem: UCRT64
+        update: true
+        install: git vim zip mingw-w64-ucrt-x86_64-gcc make
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: dependencies
+      run: apt update &&
+           apt install --assume-yes git 
+    - name: resampler
+      run: make -C zita-resampler/source libzita-resampler.a
+    - name: njbridge
+      run: make -C source CXXFLAGS+="$(shell pkg-config --cflags jack) -I../zita-resampler/source" LDFLAGS+="$(shell pkg-config --libs jack) -L../zita-resampler/source" -f Makefile-linux
