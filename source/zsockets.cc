@@ -34,9 +34,11 @@
 #include <netinet/in.h>
 #endif
 #include "zsockets.h"
+#ifndef _WIN32
 #include <arpa/inet.h>
-#include <errno.h>
 #include <net/if.h>
+#endif
+#include <errno.h>
 
 Sockaddr::Sockaddr(int family)
 {
