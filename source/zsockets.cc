@@ -41,6 +41,8 @@
 #include <errno.h>
 
 #ifdef _WIN32
+#include <Iphlpapi.h>
+
 typedef u_short sa_family_t;
 #endif
 
@@ -363,11 +365,9 @@ int sock_open_mcsend(Sockaddr* addr, const char* iface, int loop, int hops)
 {
 #ifndef _WIN32
     int fd, ipar;
-    sa_family_t fam;
-    socklen_t len;
 
-    fam = addr->family();
-    len = addr->sa_len();
+    sa_family_t fam = addr->family();
+    socklen_t len = addr->sa_len();
     if(fam != AF_INET && fam != AF_INET6)
         return -1;
 
@@ -419,10 +419,9 @@ int sock_open_mcsend(Sockaddr* addr, const char* iface, int loop, int hops)
 #else
     SOCKET fd;
     DWORD ipar;
-    int len;
 
-    int fam = addr->sa_family;
-    len = sizeof(*addr);
+    int fam = addr->family();
+    int len = addr->sa_len();
     if(fam != AF_INET && fam != AF_INET6)
         return -1;
 
@@ -463,7 +462,7 @@ int sock_open_mcsend(Sockaddr* addr, const char* iface, int loop, int hops)
         }
     }
 
-    if(connect(fd, addr, len) == SOCKET_ERROR)
+    if(connect(fd, addr->sa_ptr(), len))
     {
         closesocket(fd);
         return -1;
@@ -474,25 +473,31 @@ int sock_open_mcsend(Sockaddr* addr, const char* iface, int loop, int hops)
 
 int sock_open_mcrecv(Sockaddr* addr, const char* iface)
 {
-#ifndef _WIN32
+#ifdef _WIN32
+    SOCKET fd;
+    int ipar;
+#else
     int fd, ipar;
-    sa_family_t fam;
+#endif
 
-    fam = addr->family();
+    sa_family_t fam = addr->family();
     if(fam != AF_INET && fam != AF_INET6)
         return -1;
 
     fd = socket(fam, SOCK_DGRAM, 0);
     if(fd < 0)
         return -1;
+
     ipar = 1;
     if(setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char*)&ipar, sizeof(int)))
     {
         close(fd);
         return -1;
     }
+
     if(fam == AF_INET6)
     {
+        // IPv6
         struct ipv6_mreq mcreq;
         struct sockaddr_in6 W6, *A6;
 
@@ -516,11 +521,16 @@ int sock_open_mcrecv(Sockaddr* addr, const char* iface)
                       sizeof(mcreq)))
 #endif
         {
+#ifdef _WIN32
+            closesocket(fd);
+#else
             close(fd);
+#endif
             return -1;
         }
     } else
     {
+        // IPv4
         struct ifreq ifreq;
         struct ip_mreq mcreq;
         struct sockaddr_in W4, *A4;
@@ -531,7 +541,11 @@ int sock_open_mcrecv(Sockaddr* addr, const char* iface)
         W4.sin_port = A4->sin_port;
         if(bind(fd, (sockaddr*)&W4, sizeof(sockaddr_in)))
         {
+#ifdef _WIN32
+            closesocket(fd);
+#else
             close(fd);
+#endif
             return -1;
         }
         strncpy(ifreq.ifr_name, iface, 16);
@@ -539,7 +553,11 @@ int sock_open_mcrecv(Sockaddr* addr, const char* iface)
         ifreq.ifr_addr.sa_family = AF_INET;
         if(ioctl(fd, SIOCGIFADDR, &ifreq))
         {
+#ifdef _WIN32
+            closesocket(fd);
+#else
             close(fd);
+#endif
             return -1;
         }
         mcreq.imr_multiaddr.s_addr = A4->sin_addr.s_addr;
@@ -548,90 +566,15 @@ int sock_open_mcrecv(Sockaddr* addr, const char* iface)
         if(setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char*)&mcreq,
                       sizeof(mcreq)))
         {
-            close(fd);
-            return -1;
-        }
-    }
-    return fd;
+#ifdef _WIN32
+            closesocket(fd);
 #else
-    // WIN32:
-    SOCKET fd;
-    int ipar;
-    int len;
-    sa_family_t fam;
-
-    fam = addr->sa_family;
-    if(fam != AF_INET && fam != AF_INET6)
-        return -1;
-
-    fd = socket(fam, SOCK_DGRAM, 0);
-    if(fd == INVALID_SOCKET)
-        return -1;
-
-    ipar = 1;
-    if(setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char*)&ipar, sizeof(int)) != 0)
-    {
-        closesocket(fd);
-        return -1;
-    }
-
-    if(fam == AF_INET6)
-    {
-        struct ipv6_mreq mcreq;
-        struct sockaddr_in6 W6, *A6;
-
-        A6 = (struct sockaddr_in6*)addr;
-        len = sizeof(sockaddr_in6);
-        memset(&W6, 0, sizeof(sockaddr_in6));
-        W6.sin6_family = AF_INET6;
-        W6.sin6_port = A6->sin6_port;
-        if(bind(fd, (sockaddr*)&W6, sizeof(sockaddr_in6)) != 0)
-        {
-            closesocket(fd);
-            return -1;
-        }
-
-        memcpy(&mcreq.ipv6mr_multiaddr, &(A6->sin6_addr),
-               sizeof(struct in6_addr));
-        mcreq.ipv6mr_interface = if_nametoindex(iface);
-        if(setsockopt(fd, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP, (char*)&mcreq,
-                      sizeof(mcreq)) != 0)
-        {
-            closesocket(fd);
-            return -1;
-        }
-    } else
-    {
-        struct ip_mreq mcreq;
-        struct sockaddr_in W4, *A4;
-
-        A4 = (struct sockaddr_in*)addr;
-        len = sizeof(sockaddr_in);
-        memset(&W4, 0, sizeof(sockaddr_in));
-        W4.sin_family = AF_INET;
-        W4.sin_port = A4->sin_port;
-        if(bind(fd, (sockaddr*)&W4, sizeof(sockaddr_in)) != 0)
-        {
-            closesocket(fd);
-            return -1;
-        }
-
-        struct sockaddr_in if_addr;
-        memset(&if_addr, 0, sizeof(if_addr));
-        if_addr.sin_family = AF_INET;
-        inet_pton(AF_INET, iface, &(if_addr.sin_addr));
-
-        mcreq.imr_multiaddr.s_addr = A4->sin_addr.s_addr;
-        mcreq.imr_interface = if_addr.sin_addr;
-        if(setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char*)&mcreq,
-                      sizeof(mcreq)) != 0)
-        {
-            closesocket(fd);
+            close(fd);
+#endif
             return -1;
         }
     }
     return fd;
-#endif
 }
 
 int sock_close(int fd)
