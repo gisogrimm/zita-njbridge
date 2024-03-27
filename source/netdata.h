@@ -54,8 +54,8 @@ public:
         FL_TERM   = 0x80  // Sender terminates.
     };
 
-  //unsigned char *data (void) const { return _data; }
-     char *data (void) const { return _data; }
+    uint8_t *data (void) const { return _data; }
+  //char *data (void) const { return _data; }
     int size (void) const { return _size; } // Allocated size, normally MTU.
     int dlen (void) const { return _dlen; } // Used size in bytes.
 
@@ -137,8 +137,8 @@ private:
 
     int             _size;  // Allocated size.
     int             _dlen;  // Used size.
-  //    unsigned char  *_data;
-      char  *_data;
+    uint8_t  *_data;
+  //char  *_data;
 };
 
 

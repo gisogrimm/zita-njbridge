@@ -35,8 +35,8 @@ Netdata::Netdata (int size)
 {
     _size = size;
     _dlen = 0;
-    //    _data = new unsigned char [size];
-    _data = new char [size];
+        _data = new uint8_t [size];
+        //_data = new char [size];
 }
 
 
@@ -140,8 +140,8 @@ int Netdata::check_ptype (void) const
 void Netdata::put_audio (int chan, int offs, int nsamp, const float *adata, int astep)
 {
     int            i, v, nch, fmt;
-    //unsigned char  *q, *p;
-     char  *q, *p;
+    uint8_t  *q, *p;
+    // char  *q, *p;
 
     nch = _data [NCHAN];	
     fmt = _data [SFORM];
@@ -185,8 +185,8 @@ void Netdata::put_audio (int chan, int offs, int nsamp, const float *adata, int 
 	break;
 #else
     case FM_FLOAT:
-      //p = (unsigned char *) adata;
-	p = (char *) adata;
+      p = (uint8_t *) adata;
+      //	p = (char *) adata;
 	q = _data + ADATA + 4 * (nch * offs + chan);
 	for (i = 0; i < nsamp; i++)
 	{
@@ -208,8 +208,8 @@ void Netdata::put_audio (int chan, int offs, int nsamp, const float *adata, int 
 void Netdata::get_audio (int chan, int offs, int nsamp, float *adata, int astep) const
 {
     int            i, v, nch, fmt;
-    //unsigned char  *p, *q;
-    char  *p, *q;
+    uint8_t  *p, *q;
+    //char  *p, *q;
 
     nch = _data [NCHAN];	
     fmt = _data [SFORM];
@@ -249,8 +249,8 @@ void Netdata::get_audio (int chan, int offs, int nsamp, float *adata, int astep)
 #else
     case FM_FLOAT:
 	p = _data + ADATA + 4 * (nch * offs + chan);
-	//q = (unsigned char *) adata;
-	q = (char *) adata;
+	q = (uint8_t *) adata;
+	//q = (char *) adata;
 	for (i = 0; i < nsamp; i++)
 	{
 	    q [0] = p [3];

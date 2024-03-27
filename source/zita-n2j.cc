@@ -387,6 +387,11 @@ int main(int ac, char* av[])
                 tx_fsamp = packet->get_fsamp();
                 tx_fsize = packet->get_fsize();
                 printf("From %s : %d chan, %d Hz\n", s, tx_nchan, tx_fsamp);
+                if(tx_fsamp <= 0)
+                {
+                    fprintf(stderr, "Fatal error: negative sampling rate.\n");
+                    stop = true;
+                }
                 break;
             }
         }
