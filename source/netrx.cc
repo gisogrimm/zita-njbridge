@@ -79,7 +79,11 @@ void Netrx::thr_main (void)
     while (_state < TERM)
     {
         // Wait for packet, get timestamp.
-        rv = recv (_sockfd, _packet->data (), _packet->size (), 0);
+#ifdef _WIN32
+      rv = recv (_sockfd, (char*)(_packet->data ()), _packet->size (), 0);
+#else
+      rv = recv (_sockfd, _packet->data (), _packet->size (), 0);
+#endif
         tr = tjack (jack_get_time ());
         
         // Check socket status.
