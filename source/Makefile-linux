@@ -24,7 +24,7 @@ MANDIR ?= /usr/share/man/man1
 
 VERSION = 0.4.8
 CPPFLAGS +=  -MMD -MP -DVERSION=\"$(VERSION)\"
-CXXFLAGS += -O2 -Wall
+CXXFLAGS += -O2 -Wall -ggdb
 
 
 all:	zita-j2n zita-n2j zita-njbridge.1.gz zita-j2n.1.gz zita-n2j.1.gz
