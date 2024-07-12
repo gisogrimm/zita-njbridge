@@ -23,7 +23,7 @@ BINDIR ?= $(PREFIX)/bin
 MANDIR ?= /usr/share/man/man1
 
 VERSION = 0.4.8
-CPPFLAGS +=  -MMD -MP -DVERSION=\"$(VERSION)\"
+CPPFLAGS +=  -MMD -MP -DVERSION=\"$(VERSION)\" -ggdb
 CXXFLAGS += -O2 -Wall -ggdb
 
 
@@ -54,8 +54,6 @@ zita-n2j.1.gz:	zita-n2j.1
 
 zita-j2n.1.gz:	zita-j2n.1
 	gzip -c zita-j2n.1 > zita-j2n.1.gz
-
-
 
 install:	all
 	install -d $(DESTDIR)$(BINDIR)
