@@ -24,6 +24,7 @@
 #include "jacktx.h"
 #include "timers.h"
 #include <jack/thread.h>
+#include <iostream>
 
 
 Jacktx::Jacktx (const char *jname, const char*jserv, int nchan) :
@@ -101,6 +102,7 @@ void Jacktx::fini (void)
 
 void Jacktx::jack_static_shutdown (void *arg)
 {
+  std::cerr << "jack_static_shutdown: Jack is shutting down.\n";
     ((Jacktx *) arg)->report (TERM);
 }
 
@@ -160,7 +162,10 @@ void Jacktx::jack_freewheel (int freew)
 void Jacktx::jack_buffsize (int bsize)
 {
     if (_bsize == 0) _bsize = bsize;
-    else if (_bsize != bsize) _state = Jacktx::TERM;
+    else if (_bsize != bsize){
+      _state = Jacktx::TERM;
+      std::cerr << "jack_buffsize: bsize changed.\n";
+    }
 }
 
 
@@ -198,6 +203,7 @@ int Jacktx::jack_process (int nframes)
 	    else
 	    {
 	        // Transmit queue is full.
+                std::cerr << "Jacktx::jack_process (freewheeling): Transmit queue is full.\n";
                 _state = TERM;
  	        report (_state);
 	        return 0;
@@ -293,6 +299,7 @@ int Jacktx::jack_process (int nframes)
 	else
 	{
 	    // Transmit queue is full.
+	    std::cerr << "Jacktx::jack_process: Transmit queue is full.\n";
             _state = TERM;
  	    report (_state);
 	    return 0;
